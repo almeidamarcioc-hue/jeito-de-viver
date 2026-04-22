@@ -5,12 +5,23 @@ import PageHeader from '@/components/PageHeader'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import { Pastor, Fiel, Configuracoes } from '@/types'
 
-const HORARIOS = Array.from({ length: 22 }, (_, i) => {
+const TODOS_HORARIOS = Array.from({ length: 22 }, (_, i) => {
   const totalMin = 8 * 60 + i * 30
   const h = String(Math.floor(totalMin / 60)).padStart(2, '0')
   const m = String(totalMin % 60).padStart(2, '0')
   return `${h}:${m}`
 })
+
+function horariosDisponiveis(dataSelecionada: string): string[] {
+  const isHoje = dataSelecionada === hoje()
+  if (!isHoje) return TODOS_HORARIOS
+  const agora = new Date()
+  const horaAtual = agora.getHours() * 60 + agora.getMinutes()
+  return TODOS_HORARIOS.filter((h) => {
+    const [hh, mm] = h.split(':').map(Number)
+    return hh * 60 + mm > horaAtual
+  })
+}
 
 function hoje(): string {
   const d = new Date()
@@ -78,7 +89,7 @@ export default function NovoAgendamentoPage() {
   const [assunto, setAssunto] = useState('')
   const [pastorId, setPastorId] = useState('')
   const [data, setData] = useState(hoje())
-  const [hora, setHora] = useState('08:00')
+  const [hora, setHora] = useState(() => horariosDisponiveis(hoje())[0] ?? '08:00')
   const [status, setStatus] = useState('pendente')
   const [recorrencia, setRecorrencia] = useState('nenhuma')
   const [observacoes, setObservacoes] = useState('')
@@ -121,6 +132,12 @@ export default function NovoAgendamentoPage() {
     e.preventDefault()
     if (!nomeFiel || !telefone || !assunto || !pastorId || !data || !hora) {
       setErro('Preencha todos os campos obrigatórios.')
+      return
+    }
+    // Impede agendamento em data/hora passada
+    const agendamentoTs = new Date(`${data}T${hora}:00`)
+    if (agendamentoTs <= new Date()) {
+      setErro('Não é possível agendar em uma data ou horário que já passou.')
       return
     }
     setErro('')
@@ -319,7 +336,13 @@ export default function NovoAgendamentoPage() {
               <input
                 type="date"
                 value={data}
-                onChange={(e) => setData(e.target.value)}
+                min={hoje()}
+                onChange={(e) => {
+                  const novaData = e.target.value
+                  setData(novaData)
+                  const horarios = horariosDisponiveis(novaData)
+                  if (!horarios.includes(hora)) setHora(horarios[0] ?? '08:00')
+                }}
                 required
                 className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none"
                 style={{ borderColor: '#e5e7eb' }}
@@ -338,7 +361,7 @@ export default function NovoAgendamentoPage() {
                 onFocus={(e) => (e.target.style.borderColor = '#C5A059')}
                 onBlur={(e) => (e.target.style.borderColor = '#e5e7eb')}
               >
-                {HORARIOS.map((h) => (
+                {horariosDisponiveis(data).map((h) => (
                   <option key={h} value={h}>{h}</option>
                 ))}
               </select>

@@ -521,22 +521,19 @@ export async function getProximoHorarioLivre(
   const dataBase = aPartir ?? new Date().toISOString().slice(0, 10)
 
   // Generate slots for the next 30 days, from 08:00 to 18:00, every hour
+  // Note: generate_series with time type is not supported; use integer offsets instead
   const rows = await sql`
     WITH slots AS (
       SELECT
         (gs_date::date)::text AS data,
-        to_char(gs_hour::time, 'HH24:MI') AS hora
+        to_char(('08:00'::time + (gs_h * INTERVAL '1 hour')), 'HH24:MI') AS hora
       FROM
         generate_series(
           ${dataBase}::date,
           ${dataBase}::date + INTERVAL '30 days',
           INTERVAL '1 day'
         ) AS gs_date,
-        generate_series(
-          '08:00'::time,
-          '18:00'::time,
-          INTERVAL '1 hour'
-        ) AS gs_hour
+        generate_series(0, 10) AS gs_h
     ),
     ocupados AS (
       SELECT data::text, hora::text

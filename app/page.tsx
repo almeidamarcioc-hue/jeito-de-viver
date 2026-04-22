@@ -64,12 +64,25 @@ export default function DashboardPage() {
       try {
         const res = await fetch(`/api/agendamentos/proximo-livre?pastorId=${p.id}`)
         if (res.ok) {
-          const data = await res.json()
-          setProximosLivres((prev) => ({ ...prev, [p.id]: data.proximo || 'Sem horário livre hoje' }))
+          const json = await res.json()
+          const proximo = json.proximo as { data: string; hora: string } | null
+          if (proximo) {
+            const [y, m, d] = proximo.data.split('-')
+            const label = proximo.data === dataHoje
+              ? `Hoje às ${proximo.hora}`
+              : `${d}/${m}/${y} às ${proximo.hora}`
+            setProximosLivres((prev) => ({ ...prev, [p.id]: label }))
+          } else {
+            setProximosLivres((prev) => ({ ...prev, [p.id]: 'Sem horário livre' }))
+          }
+        } else {
+          setProximosLivres((prev) => ({ ...prev, [p.id]: 'Indisponível' }))
         }
-      } catch {}
+      } catch {
+        setProximosLivres((prev) => ({ ...prev, [p.id]: 'Indisponível' }))
+      }
     })
-  }, [pastores])
+  }, [pastores, dataHoje])
 
   const confirmados = agendamentos.filter((a) => a.status === 'confirmado').length
   const pendentes = agendamentos.filter((a) => a.status === 'pendente').length
