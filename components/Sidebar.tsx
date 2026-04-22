@@ -42,13 +42,14 @@ function isGroup(entry: NavEntry): entry is NavGroup {
 
 export default function Sidebar({ open, onClose }: { open?: boolean; onClose?: () => void }) {
   const pathname = usePathname()
-  const [now, setNow] = useState(new Date())
+  const [now, setNow] = useState<Date | null>(null)
   const [logoError, setLogoError] = useState(false)
   const [cadastrosOpen, setCadastrosOpen] = useState(
     pathname.startsWith('/cadastros')
   )
 
   useEffect(() => {
+    setNow(new Date())
     const interval = setInterval(() => setNow(new Date()), 60000)
     return () => clearInterval(interval)
   }, [])
@@ -57,12 +58,12 @@ export default function Sidebar({ open, onClose }: { open?: boolean; onClose?: (
     if (pathname.startsWith('/cadastros')) setCadastrosOpen(true)
   }, [pathname])
 
-  const dd = String(now.getDate()).padStart(2, '0')
-  const mm = String(now.getMonth() + 1).padStart(2, '0')
-  const yyyy = now.getFullYear()
-  const diaSemana = DIAS_SEMANA[now.getDay()]
-  const hh = String(now.getHours()).padStart(2, '0')
-  const min = String(now.getMinutes()).padStart(2, '0')
+  const dd = now ? String(now.getDate()).padStart(2, '0') : '--'
+  const mm = now ? String(now.getMonth() + 1).padStart(2, '0') : '--'
+  const yyyy = now ? now.getFullYear() : '----'
+  const diaSemana = now ? DIAS_SEMANA[now.getDay()] : ''
+  const hh = now ? String(now.getHours()).padStart(2, '0') : '--'
+  const min = now ? String(now.getMinutes()).padStart(2, '0') : '--'
 
   const sidebar = (
     <aside
