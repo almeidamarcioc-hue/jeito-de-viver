@@ -73,6 +73,7 @@ export default function NovoAgendamentoPage() {
   const [submitting, setSubmitting] = useState(false)
   const [sucesso, setSucesso] = useState('')
   const [erro, setErro] = useState('')
+  const [notifWA, setNotifWA] = useState<{ label: string; telefone: string; mensagem: string; aviso?: string; enviado: boolean }[]>([])
 
   // Busca de fiel
   const [termoBusca, setTermoBusca] = useState('')
@@ -185,21 +186,25 @@ export default function NovoAgendamentoPage() {
 
       setSucesso('Agendamento criado com sucesso!')
 
-      // WhatsApp fiel
+      // Monta fila de notificações WhatsApp para envio manual (evita popup blocker)
+      const filaWA: typeof notifWA = []
+      const pastorSelecionado = pastores.find((p) => p.id === Number(pastorId))
+
       if (enviarConfirmacao) {
-        const pastorNome = pastores.find((p) => p.id === Number(pastorId))?.nome || ''
-        const msg = buildMensagemConfirmacao(config, nomeFiel, pastorNome, data, hora)
-        waOpen(telefone, msg)
+        const msg = buildMensagemConfirmacao(config, nomeFiel, pastorSelecionado?.nome || '', data, hora)
+        filaWA.push({ label: `Confirmação → ${nomeFiel}`, telefone, mensagem: msg, enviado: false })
       }
 
-      // WhatsApp pastor
       if (avisarPastor) {
-        const pastor = pastores.find((p) => p.id === Number(pastorId))
-        if (pastor?.telefone) {
+        if (pastorSelecionado?.telefone) {
           const msg = buildMensagemPastor(config, nomeFiel, telefone, assunto, data, hora)
-          waOpen(pastor.telefone, msg)
+          filaWA.push({ label: `Aviso → Pastor(a) ${pastorSelecionado.nome}`, telefone: pastorSelecionado.telefone, mensagem: msg, enviado: false })
+        } else {
+          filaWA.push({ label: `Aviso → Pastor(a) ${pastorSelecionado?.nome || ''}`, telefone: '', mensagem: '', aviso: 'Sem telefone cadastrado', enviado: false })
         }
       }
+
+      setNotifWA(filaWA)
 
       // Reset form
       setNomeFiel('')
@@ -472,7 +477,40 @@ export default function NovoAgendamentoPage() {
           )}
           {sucesso && (
             <div className="bg-green-50 border border-green-300 text-green-700 rounded-lg px-4 py-2 text-sm">
-              {sucesso}
+              ✓ {sucesso}
+            </div>
+          )}
+
+          {/* Painel de notificações WhatsApp */}
+          {notifWA.length > 0 && (
+            <div className="rounded-lg border overflow-hidden" style={{ borderColor: '#25D366' }}>
+              <div className="px-4 py-2 text-sm font-semibold" style={{ backgroundColor: '#25D366', color: '#fff' }}>
+                📱 Enviar Notificações WhatsApp
+              </div>
+              <div className="divide-y">
+                {notifWA.map((n, i) => (
+                  <div key={i} className="flex items-center justify-between px-4 py-3 bg-white gap-3">
+                    <span className="text-sm text-gray-700 flex-1">{n.label}</span>
+                    {n.aviso ? (
+                      <span className="text-xs text-amber-600 font-medium">⚠ {n.aviso}</span>
+                    ) : n.enviado ? (
+                      <span className="text-sm font-semibold" style={{ color: '#25D366' }}>✓ Enviado</span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          waOpen(n.telefone, n.mensagem)
+                          setNotifWA((prev) => prev.map((x, j) => j === i ? { ...x, enviado: true } : x))
+                        }}
+                        className="text-sm font-semibold px-3 py-1.5 rounded-lg whitespace-nowrap"
+                        style={{ backgroundColor: '#25D366', color: '#fff' }}
+                      >
+                        Enviar →
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
