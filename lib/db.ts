@@ -74,8 +74,8 @@ export interface Slot {
 // ─── Connection ────────────────────────────────────────────────────────────
 
 function getDb() {
-  const raw = process.env.DATABASE_URL!
-  // @neondatabase/serverless uses HTTP — strip TCP-only params
+  const raw = process.env.DATABASE_URL
+  if (!raw) throw new Error('DATABASE_URL não configurado. Adicione esta variável de ambiente no Vercel.')
   const url = raw
     .replace(/[?&]channel_binding=[^&]*/g, '')
     .replace(/\?&/, '?')
