@@ -116,26 +116,41 @@ export default function ConfiguracoesPage() {
 
       {/* Horários de Atendimento */}
       <div className="bg-white rounded-xl shadow-sm p-5 mb-5">
-        <div className="flex items-center justify-between mb-4">
+        <div className="mb-4">
           <h2 style={{ color: '#002347' }} className="font-bold text-base">Horários de Atendimento</h2>
-          {sucessoHorarios && <span className="text-green-600 text-xs font-semibold">{sucessoHorarios}</span>}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
           {horarios.map((h) => (
             <div key={h.dia_semana} className="rounded-xl border p-3" style={{ borderColor: h.ativo ? '#C5A059' : '#e5e7eb', backgroundColor: h.ativo ? '#fffbf0' : '#f9fafb' }}>
               {/* Cabeçalho do dia */}
-              <div className="flex items-center gap-3 mb-2">
+              <div className="flex items-center gap-4 mb-2">
                 <button
                   type="button"
                   onClick={() => setHorario(h.dia_semana, 'ativo', !h.ativo)}
-                  className="w-11 h-6 rounded-full flex-shrink-0 relative overflow-hidden transition-colors"
-                  style={{ backgroundColor: h.ativo ? '#002347' : '#d1d5db' }}
+                  style={{
+                    flexShrink: 0,
+                    width: 44,
+                    height: 24,
+                    borderRadius: 12,
+                    backgroundColor: h.ativo ? '#002347' : '#d1d5db',
+                    position: 'relative',
+                    transition: 'background-color 0.2s',
+                    border: 'none',
+                    cursor: 'pointer',
+                  }}
                 >
-                  <span
-                    className="absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all duration-200"
-                    style={{ left: h.ativo ? '22px' : '2px' }}
-                  />
+                  <span style={{
+                    position: 'absolute',
+                    top: 2,
+                    left: h.ativo ? 22 : 2,
+                    width: 20,
+                    height: 20,
+                    borderRadius: '50%',
+                    backgroundColor: '#fff',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.25)',
+                    transition: 'left 0.2s',
+                  }} />
                 </button>
                 <span className="font-bold text-sm" style={{ color: h.ativo ? '#002347' : '#9ca3af' }}>
                   {DIAS_SEMANA[h.dia_semana]}
@@ -229,15 +244,20 @@ export default function ConfiguracoesPage() {
           ))}
         </div>
 
+      </div>
+
+      {/* Botão Salvar Horários — sticky na base */}
+      <div className="sticky bottom-0 z-10 bg-white border-t px-5 py-3 mb-5 rounded-b-xl shadow-md" style={{ borderColor: '#e5e7eb', marginTop: -1 }}>
         <button
           type="button"
           onClick={handleSalvarHorarios}
           disabled={salvandoHorarios}
           style={{ backgroundColor: '#002347', color: '#fff' }}
-          className="w-full mt-4 py-2.5 rounded-lg text-sm font-semibold disabled:opacity-50"
+          className="w-full py-2.5 rounded-lg text-sm font-semibold disabled:opacity-50"
         >
           {salvandoHorarios ? 'Salvando...' : '💾 Salvar Horários'}
         </button>
+        {sucessoHorarios && <p className="text-center text-green-600 text-xs font-semibold mt-2">{sucessoHorarios}</p>}
       </div>
 
       {/* Mensagens — full width, 2 colunas em desktop */}
