@@ -52,15 +52,35 @@ export async function getQRCode(): Promise<{ qrcode: string | null; status: stri
   }
 }
 
+// Delay aleatório entre 3-8s para simular digitação humana e evitar bloqueio
+function delayHumano(): Promise<void> {
+  const ms = 3000 + Math.random() * 5000
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
 export async function enviarMensagem(telefone: string, mensagem: string): Promise<{ ok: boolean; erro?: string }> {
   if (!isConfigurado()) return { ok: false, erro: 'Evolution API não configurada' }
   const numero = formatarNumero(telefone)
   if (numero.length < 12) return { ok: false, erro: 'Telefone inválido' }
   try {
+    // Simula presença ativa antes de enviar (reduz risco de bloqueio)
+    await fetch(`${BASE_URL}/chat/updatePresence/${INSTANCE}`, {
+      method: 'POST',
+      headers: headers(),
+      body: JSON.stringify({ number: numero, presence: 'composing' }),
+    }).catch(() => { /* opcional, ignora falha */ })
+
+    await delayHumano()
+
     const res = await fetch(`${BASE_URL}/message/sendText/${INSTANCE}`, {
       method: 'POST',
       headers: headers(),
-      body: JSON.stringify({ number: numero, text: mensagem }),
+      body: JSON.stringify({
+        number: numero,
+        text: mensagem,
+        // Delay de digitação proporcional ao tamanho da mensagem
+        delay: Math.min(mensagem.length * 50, 4000),
+      }),
     })
     if (!res.ok) {
       const err = await res.json().catch(() => ({}))
