@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import PageHeader from '@/components/PageHeader'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import { Pastor, Fiel, Configuracoes } from '@/types'
+import { preencherTemplate, abrirWhatsApp as waOpen } from '@/lib/whatsapp'
 
 const TODOS_HORARIOS = Array.from({ length: 22 }, (_, i) => {
   const totalMin = 8 * 60 + i * 30
@@ -28,33 +29,29 @@ function hoje(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-function abrirWhatsApp(telefone: string, mensagem: string) {
-  const num = telefone.replace(/\D/g, '')
-  const url = `https://wa.me/${num.startsWith('55') ? num : '55' + num}?text=${encodeURIComponent(mensagem)}`
-  window.open(url, '_blank')
-}
-
 function buildMensagemConfirmacao(cfg: Configuracoes | null, nome: string, pastor: string, data: string, hora: string): string {
-  const template = cfg?.msg_confirmacao || 'Olá {nome_fiel}, seu atendimento com {pastor_nome} está confirmado para {data} às {hora}.'
+  const template = cfg?.msg_confirmacao ||
+    'Olá {nome}! Seu agendamento com o(a) pastor(a) {pastor} foi confirmado para o dia {data} às {hora}. 🙏'
   const [y, m, d] = data.split('-')
-  const dataFmt = `${d}/${m}/${y}`
-  return template
-    .replace('{nome_fiel}', nome)
-    .replace('{pastor_nome}', pastor)
-    .replace('{data}', dataFmt)
-    .replace('{hora}', hora)
+  return preencherTemplate(template, {
+    nome, nome_fiel: nome,
+    pastor, pastor_nome: pastor,
+    data: `${d}/${m}/${y}`,
+    hora,
+  })
 }
 
 function buildMensagemPastor(cfg: Configuracoes | null, nome: string, telefone: string, assunto: string, data: string, hora: string): string {
-  const template = cfg?.msg_pastor || 'Pastor(a), você tem um atendimento com {nome_fiel} ({telefone}) sobre {assunto} em {data} às {hora}.'
+  const template = cfg?.msg_pastor ||
+    'Pastor(a), novo agendamento: {nome_fiel} - Assunto: {assunto} - {data} às {hora}. Telefone: {telefone}.'
   const [y, m, d] = data.split('-')
-  const dataFmt = `${d}/${m}/${y}`
-  return template
-    .replace('{nome_fiel}', nome)
-    .replace('{telefone}', telefone)
-    .replace('{assunto}', assunto)
-    .replace('{data}', dataFmt)
-    .replace('{hora}', hora)
+  return preencherTemplate(template, {
+    nome_fiel: nome, nome,
+    telefone,
+    assunto,
+    data: `${d}/${m}/${y}`,
+    hora,
+  })
 }
 
 function addMonths(dateStr: string, n: number): string {
@@ -192,7 +189,7 @@ export default function NovoAgendamentoPage() {
       if (enviarConfirmacao) {
         const pastorNome = pastores.find((p) => p.id === Number(pastorId))?.nome || ''
         const msg = buildMensagemConfirmacao(config, nomeFiel, pastorNome, data, hora)
-        abrirWhatsApp(telefone, msg)
+        waOpen(telefone, msg)
       }
 
       // WhatsApp pastor
@@ -200,7 +197,7 @@ export default function NovoAgendamentoPage() {
         const pastor = pastores.find((p) => p.id === Number(pastorId))
         if (pastor?.telefone) {
           const msg = buildMensagemPastor(config, nomeFiel, telefone, assunto, data, hora)
-          abrirWhatsApp(pastor.telefone, msg)
+          waOpen(pastor.telefone, msg)
         }
       }
 

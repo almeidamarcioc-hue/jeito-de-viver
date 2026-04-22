@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation'
 import PageHeader from '@/components/PageHeader'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import Badge from '@/components/Badge'
-import { Pastor, Slot } from '@/types'
+import { Pastor, Slot, Configuracoes } from '@/types'
+import { preencherTemplate, abrirWhatsApp as waOpen } from '@/lib/whatsapp'
 
 const DIAS_SEMANA_PT = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 const MESES_PT = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
@@ -52,15 +53,11 @@ function slotColor(tipo: string): { bg: string; border: string; text: string } {
   return { bg: '#f9fafb', border: '#e5e7eb', text: '#6b7280' }
 }
 
-function abrirWhatsApp(telefone: string, mensagem: string) {
-  const num = telefone.replace(/\D/g, '')
-  window.open(`https://wa.me/${num.startsWith('55') ? num : '55' + num}?text=${encodeURIComponent(mensagem)}`, '_blank')
-}
-
 export default function AgendaPastoresPage() {
   const router = useRouter()
   const [pastores, setPastores] = useState<Pastor[]>([])
   const [pastorId, setPastorId] = useState<number | null>(null)
+  const [config, setConfig] = useState<Configuracoes | null>(null)
   const [view, setView] = useState<'mensal' | 'semanal' | 'diaria'>('mensal')
   const [currentDate, setCurrentDate] = useState(new Date())
   const [slots, setSlots] = useState<Record<string, Record<string, Slot>>>({})
@@ -72,12 +69,13 @@ export default function AgendaPastoresPage() {
   const [atualizandoStatus, setAtualizandoStatus] = useState(false)
 
   useEffect(() => {
-    fetch('/api/pastores')
-      .then((r) => r.json())
-      .then((data) => {
-        const pasts = Array.isArray(data) ? data : []
-        setPastores(pasts)
-      })
+    Promise.all([
+      fetch('/api/pastores').then((r) => r.json()),
+      fetch('/api/configuracoes').then((r) => r.json()),
+    ]).then(([pasts, cfg]) => {
+      setPastores(Array.isArray(pasts) ? pasts : [])
+      if (cfg?.id) setConfig(cfg)
+    })
   }, [])
 
   const fetchSlots = useCallback(async () => {
@@ -549,13 +547,41 @@ export default function AgendaPastoresPage() {
                   {/* WhatsApp */}
                   <div className="flex gap-2 mt-3">
                     <button
-                      onClick={() => abrirWhatsApp(String(painel.slot!.dados.telefone), `Olá ${painel.slot!.dados.nome_fiel}, lembrando do seu atendimento hoje às ${painel.hora}.`)}
+                      onClick={() => {
+                        const d = painel.slot!.dados
+                        const templateData = {
+                          nome: String(d.nome_fiel || ''), nome_fiel: String(d.nome_fiel || ''),
+                          pastor: pastor?.nome || '', pastor_nome: pastor?.nome || '',
+                          data: String(painel.data.split('-').reverse().join('/')),
+                          hora: painel.hora,
+                          assunto: String(d.assunto || ''),
+                          telefone: String(d.telefone || ''),
+                        }
+                        const msg = config?.msg_lembrete
+                          ? preencherTemplate(config.msg_lembrete, templateData)
+                          : `Olá ${d.nome_fiel}, lembrando do seu atendimento com ${pastor?.nome || 'o(a) pastor(a)'} no dia ${templateData.data} às ${painel.hora}.`
+                        waOpen(String(d.telefone || ''), msg)
+                      }}
                       style={{ backgroundColor: '#25D366', color: '#fff' }}
                       className="flex-1 py-2 rounded-lg text-sm font-semibold"
                     >📱 WA Fiel</button>
                     {pastor?.telefone && (
                       <button
-                        onClick={() => abrirWhatsApp(pastor.telefone, `Pastor(a) ${pastor.nome}, lembrete: atendimento com ${painel.slot!.dados.nome_fiel} às ${painel.hora}.`)}
+                        onClick={() => {
+                          const d = painel.slot!.dados
+                          const templateData = {
+                            nome: String(d.nome_fiel || ''), nome_fiel: String(d.nome_fiel || ''),
+                            pastor: pastor.nome, pastor_nome: pastor.nome,
+                            data: String(painel.data.split('-').reverse().join('/')),
+                            hora: painel.hora,
+                            assunto: String(d.assunto || ''),
+                            telefone: String(d.telefone || ''),
+                          }
+                          const msg = config?.msg_pastor
+                            ? preencherTemplate(config.msg_pastor, templateData)
+                            : `Pastor(a) ${pastor.nome}, lembrete: atendimento com ${d.nome_fiel} no dia ${templateData.data} às ${painel.hora}.`
+                          waOpen(pastor.telefone, msg)
+                        }}
                         style={{ backgroundColor: '#128C7E', color: '#fff' }}
                         className="flex-1 py-2 rounded-lg text-sm font-semibold"
                       >📱 WA Pastor</button>
