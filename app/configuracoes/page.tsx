@@ -113,14 +113,63 @@ export default function ConfiguracoesPage() {
         <h2 style={{ color: '#002347' }} className="font-bold text-base mb-3">Conexão WhatsApp</h2>
 
         {waStatus === 'nao_configurado' && (
-          <div className="rounded-lg p-4 text-sm" style={{ backgroundColor: '#fef3c7', border: '1px solid #f59e0b' }}>
-            <p className="font-semibold text-amber-800 mb-1">Evolution API não configurada</p>
-            <p className="text-amber-700">Adicione as variáveis de ambiente no Vercel:</p>
-            <ul className="mt-2 space-y-1 font-mono text-xs text-amber-900">
-              <li>EVOLUTION_API_URL=https://sua-evolution-api.com</li>
-              <li>EVOLUTION_API_KEY=sua-chave-api</li>
-              <li>EVOLUTION_INSTANCE=secretaria-ibtm</li>
-            </ul>
+          <div className="space-y-4">
+            <div className="rounded-lg p-4 text-sm" style={{ backgroundColor: '#fef9c3', border: '1px solid #f59e0b' }}>
+              <p className="font-bold text-amber-900 mb-3">Siga os passos abaixo para ativar o envio automático:</p>
+
+              <div className="space-y-3">
+                <div className="flex gap-3">
+                  <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 text-white" style={{ backgroundColor: '#002347' }}>1</span>
+                  <div>
+                    <p className="font-semibold text-amber-900">Crie uma conta gratuita no Railway</p>
+                    <a href="https://railway.app" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline text-xs">Abrir railway.app →</a>
+                    <p className="text-amber-700 text-xs mt-1">Login com Google ou GitHub (gratuito)</p>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 text-white" style={{ backgroundColor: '#002347' }}>2</span>
+                  <div>
+                    <p className="font-semibold text-amber-900">Crie um projeto com a imagem Docker abaixo</p>
+                    <p className="text-xs text-amber-700 mt-1">New Project → Deploy from Docker Image</p>
+                    <CopyBox text="atendai/evolution-api:latest" label="Imagem:" />
+                    <p className="text-xs text-amber-700 mt-2">Adicione esta variável de ambiente:</p>
+                    <CopyBox text="AUTHENTICATION_API_KEY = secretaria2024ibtm" label="Variável:" />
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 text-white" style={{ backgroundColor: '#002347' }}>3</span>
+                  <div>
+                    <p className="font-semibold text-amber-900">Copie a URL pública gerada pelo Railway</p>
+                    <p className="text-xs text-amber-700">Ex: <code className="bg-amber-100 px-1 rounded">https://evolution-api-xxx.up.railway.app</code></p>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 text-white" style={{ backgroundColor: '#002347' }}>4</span>
+                  <div>
+                    <p className="font-semibold text-amber-900">Adicione as 3 variáveis no Vercel</p>
+                    <p className="text-xs text-amber-700 mb-1">Vercel → seu projeto → Settings → Environment Variables</p>
+                    <div className="space-y-1">
+                      <CopyBox text="EVOLUTION_API_URL" label="Nome:" />
+                      <CopyBox text="(URL do Railway copiada acima)" label="Valor:" />
+                      <CopyBox text="EVOLUTION_API_KEY = secretaria2024ibtm" label="" />
+                      <CopyBox text="EVOLUTION_INSTANCE = secretaria-ibtm" label="" />
+                    </div>
+                    <p className="text-xs text-amber-700 mt-1">Depois clique em <strong>Redeploy</strong> no Vercel.</p>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 text-white" style={{ backgroundColor: '#25D366' }}>5</span>
+                  <div>
+                    <p className="font-semibold text-amber-900">Volte aqui e escaneie o QR Code com o WhatsApp</p>
+                    <p className="text-xs text-amber-700">Após o redeploy, esta tela mostrará um botão para conectar.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
@@ -129,7 +178,7 @@ export default function ConfiguracoesPage() {
             <div className="flex items-center gap-2">
               <span className={`w-3 h-3 rounded-full ${waStatus === 'open' ? 'bg-green-500' : waStatus === 'connecting' || waStatus === 'carregando' ? 'bg-yellow-400' : 'bg-red-500'}`} />
               <span className="text-sm font-semibold text-gray-700">
-                {waStatus === 'open' ? 'Conectado' : waStatus === 'connecting' ? 'Conectando...' : waStatus === 'carregando' ? 'Verificando...' : 'Desconectado'}
+                {waStatus === 'open' ? 'Conectado — mensagens serão enviadas automaticamente' : waStatus === 'connecting' ? 'Conectando... (escaneie o QR Code abaixo)' : waStatus === 'carregando' ? 'Verificando...' : 'Desconectado'}
               </span>
             </div>
 
@@ -229,6 +278,32 @@ export default function ConfiguracoesPage() {
           {salvando ? 'Salvando...' : '💾 Salvar Configurações'}
         </button>
       </form>
+    </div>
+  )
+}
+
+function CopyBox({ text, label }: { text: string; label: string }) {
+  const [copiado, setCopiado] = useState(false)
+  const copiar = () => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopiado(true)
+      setTimeout(() => setCopiado(false), 1500)
+    })
+  }
+  return (
+    <div className="flex items-center gap-2 mt-1">
+      {label && <span className="text-xs text-amber-700 w-14 flex-shrink-0">{label}</span>}
+      <div className="flex items-center gap-1 flex-1 bg-amber-50 border border-amber-200 rounded px-2 py-1">
+        <code className="text-xs text-amber-900 flex-1 select-all">{text}</code>
+        <button
+          type="button"
+          onClick={copiar}
+          className="text-xs px-1.5 py-0.5 rounded flex-shrink-0"
+          style={{ backgroundColor: copiado ? '#25D366' : '#002347', color: '#fff' }}
+        >
+          {copiado ? '✓' : 'Copiar'}
+        </button>
+      </div>
     </div>
   )
 }
