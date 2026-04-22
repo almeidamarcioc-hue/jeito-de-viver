@@ -113,64 +113,7 @@ export default function ConfiguracoesPage() {
         <h2 style={{ color: '#002347' }} className="font-bold text-base mb-3">Conexão WhatsApp</h2>
 
         {waStatus === 'nao_configurado' && (
-          <div className="space-y-4">
-            <div className="rounded-lg p-4 text-sm" style={{ backgroundColor: '#fef9c3', border: '1px solid #f59e0b' }}>
-              <p className="font-bold text-amber-900 mb-3">Siga os passos abaixo para ativar o envio automático:</p>
-
-              <div className="space-y-3">
-                <div className="flex gap-3">
-                  <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 text-white" style={{ backgroundColor: '#002347' }}>1</span>
-                  <div>
-                    <p className="font-semibold text-amber-900">Crie uma conta gratuita no Railway</p>
-                    <a href="https://railway.app" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline text-xs">Abrir railway.app →</a>
-                    <p className="text-amber-700 text-xs mt-1">Login com Google ou GitHub (gratuito)</p>
-                  </div>
-                </div>
-
-                <div className="flex gap-3">
-                  <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 text-white" style={{ backgroundColor: '#002347' }}>2</span>
-                  <div>
-                    <p className="font-semibold text-amber-900">Crie um projeto com a imagem Docker abaixo</p>
-                    <p className="text-xs text-amber-700 mt-1">New Project → Deploy from Docker Image</p>
-                    <CopyBox text="atendai/evolution-api:latest" label="Imagem:" />
-                    <p className="text-xs text-amber-700 mt-2">Adicione esta variável de ambiente:</p>
-                    <CopyBox text="AUTHENTICATION_API_KEY = secretaria2024ibtm" label="Variável:" />
-                  </div>
-                </div>
-
-                <div className="flex gap-3">
-                  <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 text-white" style={{ backgroundColor: '#002347' }}>3</span>
-                  <div>
-                    <p className="font-semibold text-amber-900">Copie a URL pública gerada pelo Railway</p>
-                    <p className="text-xs text-amber-700">Ex: <code className="bg-amber-100 px-1 rounded">https://evolution-api-xxx.up.railway.app</code></p>
-                  </div>
-                </div>
-
-                <div className="flex gap-3">
-                  <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 text-white" style={{ backgroundColor: '#002347' }}>4</span>
-                  <div>
-                    <p className="font-semibold text-amber-900">Adicione as 3 variáveis no Vercel</p>
-                    <p className="text-xs text-amber-700 mb-1">Vercel → seu projeto → Settings → Environment Variables</p>
-                    <div className="space-y-1">
-                      <CopyBox text="EVOLUTION_API_URL" label="Nome:" />
-                      <CopyBox text="(URL do Railway copiada acima)" label="Valor:" />
-                      <CopyBox text="EVOLUTION_API_KEY = secretaria2024ibtm" label="" />
-                      <CopyBox text="EVOLUTION_INSTANCE = secretaria-ibtm" label="" />
-                    </div>
-                    <p className="text-xs text-amber-700 mt-1">Depois clique em <strong>Redeploy</strong> no Vercel.</p>
-                  </div>
-                </div>
-
-                <div className="flex gap-3">
-                  <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 text-white" style={{ backgroundColor: '#25D366' }}>5</span>
-                  <div>
-                    <p className="font-semibold text-amber-900">Volte aqui e escaneie o QR Code com o WhatsApp</p>
-                    <p className="text-xs text-amber-700">Após o redeploy, esta tela mostrará um botão para conectar.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <p className="text-sm text-gray-500">Envio automático via WhatsApp não configurado.</p>
         )}
 
         {waStatus !== 'nao_configurado' && (
