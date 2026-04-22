@@ -77,7 +77,6 @@ export default function AgendaPastoresPage() {
       .then((data) => {
         const pasts = Array.isArray(data) ? data : []
         setPastores(pasts)
-        if (pasts.length > 0) setPastorId(pasts[0].id)
       })
   }, [])
 
@@ -199,10 +198,11 @@ export default function AgendaPastoresPage() {
           <label className="block text-xs font-semibold text-gray-600 mb-1">Pastor(a)</label>
           <select
             value={pastorId ?? ''}
-            onChange={(e) => setPastorId(Number(e.target.value))}
+            onChange={(e) => setPastorId(e.target.value ? Number(e.target.value) : null)}
             className="border rounded-lg px-3 py-1.5 text-sm bg-white focus:outline-none"
             style={{ borderColor: '#e5e7eb', color: '#1a202c' }}
           >
+            <option value="">— Selecione um pastor —</option>
             {pastores.map((p) => <option key={p.id} value={p.id}>{p.nome}</option>)}
           </select>
         </div>
@@ -229,9 +229,16 @@ export default function AgendaPastoresPage() {
         </div>
       </div>
 
-      {loading && <LoadingSpinner />}
+      {!pastorId && !loading && (
+        <div className="bg-white rounded-xl shadow-sm p-10 text-center text-gray-400">
+          <img src="/logo.png" alt="IBTM" className="mx-auto mb-3" style={{ height: 56, opacity: 0.35 }} />
+          <p className="font-semibold text-gray-500">Selecione um pastor para visualizar a agenda</p>
+        </div>
+      )}
 
-      {!loading && (
+      {loading && pastorId && <LoadingSpinner />}
+
+      {!loading && pastorId && (
         <div className="bg-white rounded-xl shadow-sm p-4">
 
           {/* ── MENSAL ── */}

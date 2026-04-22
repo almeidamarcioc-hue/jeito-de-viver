@@ -30,7 +30,6 @@ function formatDatePT(dateStr: string): string {
 export default function DashboardPage() {
   const [agendamentos, setAgendamentos] = useState<Agendamento[]>([])
   const [pastores, setPastores] = useState<Pastor[]>([])
-  const [proximosLivres, setProximosLivres] = useState<Record<number, string>>({})
   const [loading, setLoading] = useState(true)
   const [erro, setErro] = useState('')
 
@@ -57,32 +56,6 @@ export default function DashboardPage() {
     }
     load()
   }, [dataHoje])
-
-  useEffect(() => {
-    if (pastores.length === 0) return
-    pastores.forEach(async (p) => {
-      try {
-        const res = await fetch(`/api/agendamentos/proximo-livre?pastorId=${p.id}`)
-        if (res.ok) {
-          const json = await res.json()
-          const proximo = json.proximo as { data: string; hora: string } | null
-          if (proximo) {
-            const [y, m, d] = proximo.data.split('-')
-            const label = proximo.data === dataHoje
-              ? `Hoje às ${proximo.hora}`
-              : `${d}/${m}/${y} às ${proximo.hora}`
-            setProximosLivres((prev) => ({ ...prev, [p.id]: label }))
-          } else {
-            setProximosLivres((prev) => ({ ...prev, [p.id]: 'Sem horário livre' }))
-          }
-        } else {
-          setProximosLivres((prev) => ({ ...prev, [p.id]: 'Indisponível' }))
-        }
-      } catch {
-        setProximosLivres((prev) => ({ ...prev, [p.id]: 'Indisponível' }))
-      }
-    })
-  }, [pastores, dataHoje])
 
   const confirmados = agendamentos.filter((a) => a.status === 'confirmado').length
   const pendentes = agendamentos.filter((a) => a.status === 'pendente').length
@@ -162,18 +135,6 @@ export default function DashboardPage() {
                 )}
               </div>
 
-              {/* Próximo Livre */}
-              <div
-                style={{ borderTop: '1px solid #e5e7eb', backgroundColor: '#f9fafb' }}
-                className="px-4 py-2"
-              >
-                <p className="text-xs text-gray-500">
-                  Próximo livre:{' '}
-                  <span style={{ color: '#002347' }} className="font-semibold">
-                    {proximosLivres[pastor.id] ?? 'Carregando...'}
-                  </span>
-                </p>
-              </div>
             </div>
           )
         })}
