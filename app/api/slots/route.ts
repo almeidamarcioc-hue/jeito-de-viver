@@ -17,10 +17,12 @@ export async function GET(request: NextRequest) {
 
     const slotsMap = await getSlotsPastor(parseInt(pastorId, 10), dataInicio, dataFim)
 
-    // Converte o Map para objeto JSON serializável
-    const slots: Record<string, { tipo: string; dados: Record<string, unknown> }> = {}
+    // Converte Map de "data|hora" para objeto aninhado { data: { hora: slot } }
+    const slots: Record<string, Record<string, { tipo: string; dados: Record<string, unknown> }>> = {}
     for (const [chave, slot] of slotsMap.entries()) {
-      slots[chave] = slot
+      const [data, hora] = chave.split('|')
+      if (!slots[data]) slots[data] = {}
+      slots[data][hora] = slot
     }
 
     return NextResponse.json(slots)

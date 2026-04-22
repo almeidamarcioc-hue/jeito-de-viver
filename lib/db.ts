@@ -518,7 +518,12 @@ export async function getProximoHorarioLivre(
   aPartir?: string
 ): Promise<{ data: string; hora: string } | null> {
   const sql = getDb()
-  const dataBase = aPartir ?? new Date().toISOString().slice(0, 10)
+  const agora = new Date()
+  const dataBase = aPartir ?? agora.toISOString().slice(0, 10)
+  // Hora mínima: se for hoje, ignora horários passados; senão começa às 08:00
+  const horaMin = dataBase === agora.toISOString().slice(0, 10)
+    ? `${String(agora.getHours()).padStart(2, '0')}:${String(agora.getMinutes()).padStart(2, '0')}`
+    : '00:00'
 
   // Generate slots for the next 30 days, from 08:00 to 18:00, every hour
   // Note: generate_series with time type is not supported; use integer offsets instead
@@ -556,6 +561,7 @@ export async function getProximoHorarioLivre(
       WHERE o.data = s.data
         AND LEFT(o.hora, 5) = s.hora
     )
+    AND (s.data > ${dataBase} OR (s.data = ${dataBase} AND s.hora > ${horaMin}))
     ORDER BY s.data, s.hora
     LIMIT 1
   `
