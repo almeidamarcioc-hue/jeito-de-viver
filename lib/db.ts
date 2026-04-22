@@ -310,6 +310,20 @@ export async function criarAgendamento(dados: Partial<Agendamento>): Promise<num
   const status = dados.status ?? 'pendente'
   const recorrencia = dados.recorrencia ?? 'nenhuma'
   const observacoes = dados.observacoes ?? ''
+
+  // Verifica se algum slot do horário solicitado está bloqueado
+  const bloqueados = await sql`
+    SELECT id FROM bloqueios
+    WHERE pastor_id = ${pastor_id}
+      AND data = ${data}::date
+      AND hora >= ${hora}::time
+      AND hora < ${hora}::time + (${duracao_min} * interval '1 minute')
+    LIMIT 1
+  `
+  if (bloqueados.length > 0) {
+    throw new Error('BLOQUEADO: Este horário está bloqueado para o pastor.')
+  }
+
   const rows = await sql`
     INSERT INTO agendamentos (nome_fiel, telefone, assunto, pastor_id, data, hora, duracao_min, status, recorrencia, observacoes)
     VALUES (${nome_fiel}, ${telefone}, ${assunto}, ${pastor_id}, ${data}::date, ${hora}::time, ${duracao_min}, ${status}, ${recorrencia}, ${observacoes})

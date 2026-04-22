@@ -161,7 +161,13 @@ export default function NovoAgendamentoPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       })
-      if (!res.ok) throw new Error('Erro ao criar agendamento')
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        const raw: string = body?.error ?? 'Erro ao criar agendamento'
+        throw new Error(raw.includes('BLOQUEADO')
+          ? 'Este horário está bloqueado para este pastor. Escolha outro horário.'
+          : raw)
+      }
 
       // Recorrência: criar 11 cópias adicionais
       if (recorrencia !== 'nenhuma') {
