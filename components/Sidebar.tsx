@@ -7,11 +7,7 @@ import { useState, useEffect } from 'react'
 const navLinks = [
   { href: '/', icon: '🏠', label: 'Dashboard' },
   { href: '/agendamentos/novo', icon: '➕', label: 'Novo Agendamento' },
-  { href: '/agendamentos', icon: '📋', label: 'Gerenciar Agenda' },
   { href: '/agenda/pastores', icon: '📅', label: 'Agenda dos Pastores' },
-  { href: '/agenda/dia', icon: '📆', label: 'Agenda do Dia' },
-  { href: '/agenda/semana', icon: '📊', label: 'Agenda da Semana' },
-  { href: '/horario-livre', icon: '👥', label: 'Próximo Horário Livre' },
   { href: '/atendidos', icon: '🙍', label: 'Atendidos' },
   { href: '/configuracoes', icon: '⚙️', label: 'Configurações' },
 ]
