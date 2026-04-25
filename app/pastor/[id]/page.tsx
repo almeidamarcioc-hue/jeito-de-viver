@@ -43,6 +43,12 @@ export default function PastorAgendaPage() {
   const [atualizandoStatus, setAtualizandoStatus] = useState(false)
   const [bloqueandoDia, setBloqueandoDia] = useState(false)
 
+  // Novo agendamento pelo app do pastor
+  const [novoAg, setNovoAg] = useState(false)
+  const [novoAgForm, setNovoAgForm] = useState({ nome_fiel: '', telefone: '', assunto: '', status: 'pendente', duracao_min: 30, observacoes: '' })
+  const [salvandoAg, setSalvandoAg] = useState(false)
+  const [erroAg, setErroAg] = useState('')
+
   useEffect(() => {
     Promise.all([
       fetch('/api/pastores').then(r => r.json()),
@@ -148,6 +154,35 @@ export default function PastorAgendaPage() {
       })
       await fetchSlots(); setPainel(null)
     } finally { setAtualizandoStatus(false) }
+  }
+
+  const handleSalvarAg = async () => {
+    if (!novoAgForm.nome_fiel || !novoAgForm.telefone || !novoAgForm.assunto) {
+      setErroAg('Preencha nome, telefone e assunto.')
+      return
+    }
+    setSalvandoAg(true)
+    setErroAg('')
+    try {
+      const res = await fetch('/api/agendamentos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...novoAgForm, pastor_id: pastorId, data: painel!.data, hora: painel!.hora }),
+      })
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        const raw: string = body?.error ?? 'Erro ao salvar'
+        throw new Error(raw.includes('BLOQUEADO') ? 'Este horário está bloqueado.' : raw)
+      }
+      await fetchSlots()
+      setPainel(null)
+      setNovoAg(false)
+      setNovoAgForm({ nome_fiel: '', telefone: '', assunto: '', status: 'pendente', duracao_min: 30, observacoes: '' })
+    } catch (e: any) {
+      setErroAg(e.message || 'Erro ao salvar agendamento')
+    } finally {
+      setSalvandoAg(false)
+    }
   }
 
   const templateData = (d: Record<string, unknown>) => ({
@@ -472,7 +507,7 @@ export default function PastorAgendaPage() {
 
       {/* ── PAINEL SLOT ── */}
       {painel && (
-        <div className="fixed inset-0 z-50 flex flex-col justify-end" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }} onClick={(e) => { if (e.target === e.currentTarget) setPainel(null) }}>
+        <div className="fixed inset-0 z-50 flex flex-col justify-end" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }} onClick={(e) => { if (e.target === e.currentTarget) { setPainel(null); setNovoAg(false); setErroAg('') } }}>
           <div className="bg-white rounded-t-3xl max-h-[90vh] flex flex-col" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
             {/* Handle */}
             <div className="flex justify-center pt-3 pb-1">
@@ -483,33 +518,122 @@ export default function PastorAgendaPage() {
                 <p style={{ color: '#002347' }} className="font-bold text-base">{painel.hora} — {painel.data.split('-').reverse().join('/')}</p>
                 <p className="text-xs text-gray-500">{pastor?.nome}</p>
               </div>
-              <button onClick={() => setPainel(null)} style={{ color: '#002347' }} className="text-2xl leading-none font-bold">×</button>
+              <button onClick={() => { setPainel(null); setNovoAg(false); setErroAg('') }} style={{ color: '#002347' }} className="text-2xl leading-none font-bold">×</button>
             </div>
 
             <div className="overflow-y-auto px-5 py-4 flex-1">
               {/* Horário livre */}
               {!painel.slot && (
                 <div className="space-y-3">
-                  <p className="text-green-600 font-bold">✓ Horário Livre</p>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1">Motivo do bloqueio (opcional)</label>
-                    <input
-                      type="text"
-                      value={motivoBloqueio}
-                      onChange={(e) => setMotivoBloqueio(e.target.value)}
-                      placeholder="Ex: Reunião interna"
-                      className="w-full border rounded-xl px-4 py-3 text-sm focus:outline-none"
-                      style={{ borderColor: '#e5e7eb' }}
-                    />
-                  </div>
-                  <button
-                    onClick={handleBloquear}
-                    disabled={bloqueando}
-                    style={{ backgroundColor: '#002347', color: '#fff' }}
-                    className="w-full py-3.5 rounded-xl font-bold text-sm disabled:opacity-50"
-                  >
-                    {bloqueando ? 'Bloqueando...' : '🔒 Bloquear Horário'}
-                  </button>
+                  <p className="text-green-600 font-bold text-sm">✓ Horário Livre — {painel.hora} · {painel.data.split('-').reverse().join('/')}</p>
+
+                  {!novoAg ? (
+                    <>
+                      <button
+                        onClick={() => { setNovoAg(true); setErroAg('') }}
+                        style={{ backgroundColor: '#C5A059', color: '#002347' }}
+                        className="w-full py-3.5 rounded-xl font-bold text-sm"
+                      >
+                        📅 Novo Agendamento
+                      </button>
+                      <div className="border-t pt-3" style={{ borderColor: '#f3f4f6' }}>
+                        <label className="block text-xs font-semibold text-gray-500 mb-1">Motivo do bloqueio (opcional)</label>
+                        <input
+                          type="text"
+                          value={motivoBloqueio}
+                          onChange={(e) => setMotivoBloqueio(e.target.value)}
+                          placeholder="Ex: Reunião interna"
+                          className="w-full border rounded-xl px-4 py-3 text-sm focus:outline-none"
+                          style={{ borderColor: '#e5e7eb' }}
+                        />
+                        <button
+                          onClick={handleBloquear}
+                          disabled={bloqueando}
+                          style={{ backgroundColor: '#374151', color: '#fff' }}
+                          className="w-full mt-2 py-3 rounded-xl font-bold text-sm disabled:opacity-50"
+                        >
+                          {bloqueando ? 'Bloqueando...' : '🔒 Bloquear Horário'}
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => { setNovoAg(false); setErroAg('') }}
+                        className="text-sm text-gray-500 font-semibold flex items-center gap-1"
+                      >
+                        ‹ Voltar
+                      </button>
+
+                      <div className="space-y-2">
+                        <input
+                          type="text"
+                          placeholder="Nome do fiel *"
+                          value={novoAgForm.nome_fiel}
+                          onChange={(e) => setNovoAgForm(f => ({ ...f, nome_fiel: e.target.value }))}
+                          className="w-full border rounded-xl px-4 py-3 text-sm focus:outline-none"
+                          style={{ borderColor: '#e5e7eb' }}
+                        />
+                        <input
+                          type="tel"
+                          placeholder="Telefone (WhatsApp) *"
+                          value={novoAgForm.telefone}
+                          onChange={(e) => setNovoAgForm(f => ({ ...f, telefone: e.target.value }))}
+                          className="w-full border rounded-xl px-4 py-3 text-sm focus:outline-none"
+                          style={{ borderColor: '#e5e7eb' }}
+                        />
+                        <input
+                          type="text"
+                          placeholder="Assunto *"
+                          value={novoAgForm.assunto}
+                          onChange={(e) => setNovoAgForm(f => ({ ...f, assunto: e.target.value }))}
+                          className="w-full border rounded-xl px-4 py-3 text-sm focus:outline-none"
+                          style={{ borderColor: '#e5e7eb' }}
+                        />
+                        <div className="grid grid-cols-2 gap-2">
+                          <select
+                            value={novoAgForm.status}
+                            onChange={(e) => setNovoAgForm(f => ({ ...f, status: e.target.value }))}
+                            className="border rounded-xl px-3 py-3 text-sm focus:outline-none"
+                            style={{ borderColor: '#e5e7eb' }}
+                          >
+                            <option value="pendente">Pendente</option>
+                            <option value="confirmado">Confirmado</option>
+                          </select>
+                          <select
+                            value={novoAgForm.duracao_min}
+                            onChange={(e) => setNovoAgForm(f => ({ ...f, duracao_min: Number(e.target.value) }))}
+                            className="border rounded-xl px-3 py-3 text-sm focus:outline-none"
+                            style={{ borderColor: '#e5e7eb' }}
+                          >
+                            <option value={30}>30 min</option>
+                            <option value={60}>1 hora</option>
+                            <option value={90}>1h30</option>
+                            <option value={120}>2 horas</option>
+                          </select>
+                        </div>
+                        <textarea
+                          placeholder="Observações (opcional)"
+                          value={novoAgForm.observacoes}
+                          onChange={(e) => setNovoAgForm(f => ({ ...f, observacoes: e.target.value }))}
+                          rows={2}
+                          className="w-full border rounded-xl px-4 py-3 text-sm focus:outline-none resize-none"
+                          style={{ borderColor: '#e5e7eb' }}
+                        />
+                      </div>
+
+                      {erroAg && <p className="text-red-500 text-sm font-semibold">{erroAg}</p>}
+
+                      <button
+                        onClick={handleSalvarAg}
+                        disabled={salvandoAg}
+                        style={{ backgroundColor: '#002347', color: '#fff' }}
+                        className="w-full py-3.5 rounded-xl font-bold text-sm disabled:opacity-50"
+                      >
+                        {salvandoAg ? 'Salvando...' : '💾 Salvar Agendamento'}
+                      </button>
+                    </>
+                  )}
                 </div>
               )}
 
