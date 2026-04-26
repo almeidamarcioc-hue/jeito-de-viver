@@ -29,15 +29,27 @@ function addDays(dateStr: string, n: number) {
   return toDateStr(d)
 }
 
-const emptyForm = {
+type FormState = {
+  turma_id: number
+  aluno_id: number | null
+  professor_id: number | null
+  data: string
+  hora: string
+  duracao_min: number
+  assunto: string
+  status: 'confirmado' | 'cancelado' | 'remarcado'
+  observacoes: string
+}
+
+const emptyForm: FormState = {
   turma_id: 0,
-  aluno_id: null as number | null,
-  professor_id: null as number | null,
+  aluno_id: null,
+  professor_id: null,
   data: toDateStr(new Date()),
   hora: '08:00',
   duracao_min: 50,
   assunto: '',
-  status: 'confirmado' as 'confirmado' | 'cancelado' | 'remarcado',
+  status: 'confirmado',
   observacoes: '',
 }
 
