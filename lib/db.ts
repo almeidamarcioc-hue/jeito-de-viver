@@ -1,5 +1,6 @@
 import { neon } from '@neondatabase/serverless'
 import { Professor, Turma, Aluno, Agendamento } from '@/types'
+import { hashPassword } from './auth'
 
 function getDb() {
   const raw = process.env.DATABASE_URL
@@ -78,6 +79,27 @@ export async function initDb() {
       data_criacao TIMESTAMPTZ DEFAULT NOW()
     )
   `
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS usuarios (
+      id SERIAL PRIMARY KEY,
+      usuario VARCHAR(100) NOT NULL UNIQUE,
+      senha_hash VARCHAR(300) NOT NULL,
+      nome VARCHAR(200) NOT NULL,
+      role VARCHAR(20) DEFAULT 'admin',
+      ativo BOOLEAN DEFAULT TRUE,
+      data_criacao TIMESTAMPTZ DEFAULT NOW()
+    )
+  `
+
+  const existsAdmin = await sql`SELECT id FROM usuarios WHERE usuario = 'admin'`
+  if ((existsAdmin as any[]).length === 0) {
+    const hash = hashPassword('admin')
+    await sql`
+      INSERT INTO usuarios (usuario, senha_hash, nome, role)
+      VALUES ('admin', ${hash}, 'Administrador', 'admin')
+    `
+  }
 }
 
 // ─── Professores ───────────────────────────────────────────────────────────
@@ -394,6 +416,14 @@ export async function updateAgendamento(id: number, data: Partial<Omit<Agendamen
 export async function deleteAgendamento(id: number): Promise<void> {
   const sql = getDb()
   await sql`DELETE FROM agendamentos WHERE id = ${id}`
+}
+
+// ─── Usuários ──────────────────────────────────────────────────────────────
+
+export async function getUsuarioPorLogin(usuario: string) {
+  const sql = getDb()
+  const rows = await sql`SELECT * FROM usuarios WHERE usuario = ${usuario} AND ativo = TRUE`
+  return rows[0] ?? null
 }
 
 // ─── Stats ─────────────────────────────────────────────────────────────────

@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 
 const DIAS_SEMANA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
@@ -41,6 +41,7 @@ function isGroup(entry: NavEntry): entry is NavGroup {
 
 export default function Sidebar({ open, onClose }: { open?: boolean; onClose?: () => void }) {
   const pathname = usePathname()
+  const router = useRouter()
   const [now, setNow] = useState<Date | null>(null)
   const [logoError, setLogoError] = useState(false)
   const [cadastrosOpen, setCadastrosOpen] = useState(
@@ -155,6 +156,16 @@ export default function Sidebar({ open, onClose }: { open?: boolean; onClose?: (
           {diaSemana}, {dd}/{mm}/{yyyy}
         </p>
         <p style={{ color: '#6b7a8d' }} className="text-xs mt-1">{hh}:{min}</p>
+        <button
+          onClick={async () => {
+            await fetch('/api/auth/logout', { method: 'POST' })
+            router.push('/login')
+          }}
+          style={{ color: '#6b7a8d' }}
+          className="mt-3 text-xs hover:text-red-400 transition-colors flex items-center gap-1 mx-auto"
+        >
+          <span>⏏</span> Sair
+        </button>
       </div>
     </aside>
   )

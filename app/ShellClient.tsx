@@ -1,10 +1,15 @@
 'use client'
 
 import { useState } from 'react'
+import { usePathname } from 'next/navigation'
 import Sidebar from '@/components/Sidebar'
 
 export default function ShellClient({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  if (pathname === '/login') return <>{children}</>
+
 
   return (
     <>
