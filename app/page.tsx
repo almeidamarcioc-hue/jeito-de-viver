@@ -1,152 +1,122 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import PageHeader from '@/components/PageHeader'
+import { useRouter } from 'next/navigation'
 import LoadingSpinner from '@/components/LoadingSpinner'
-import { Aluno, Turma, Professor } from '@/types'
 
-export default function DashboardPage() {
-  const [alunos, setAlunos] = useState<Aluno[]>([])
-  const [turmas, setTurmas] = useState<Turma[]>([])
-  const [professores, setProfessores] = useState<Professor[]>([])
+interface Me { id: number; usuario: string; nome: string; role: string; modulos: string }
+
+export default function WorkspacePage() {
+  const router = useRouter()
+  const [me, setMe] = useState<Me | null>(null)
   const [loading, setLoading] = useState(true)
-  const [erro, setErro] = useState('')
 
   useEffect(() => {
-    async function load() {
-      try {
-        setLoading(true)
-        const [resA, resT, resP] = await Promise.all([
-          fetch('/api/alunos'),
-          fetch('/api/turmas'),
-          fetch('/api/professores'),
-        ])
-        if (!resA.ok || !resT.ok || !resP.ok) throw new Error('Erro ao carregar dados')
-        setAlunos(await resA.json())
-        setTurmas(await resT.json())
-        setProfessores(await resP.json())
-      } catch (e: any) {
-        setErro(e.message || 'Erro desconhecido')
-      } finally {
-        setLoading(false)
-      }
-    }
-    load()
-  }, [])
+    fetch('/api/auth/me')
+      .then(r => { if (!r.ok) { router.push('/login'); return null }; return r.json() })
+      .then(d => { if (d) { setMe(d); setLoading(false) } })
+      .catch(() => router.push('/login'))
+  }, [router])
 
-  const alunosAtivos = alunos.filter(a => a.ativo).length
-  const turmasAtivas = turmas.filter(t => t.ativo).length
+  function hasModule(mod: string) {
+    if (!me) return false
+    return me.modulos === '*' || me.modulos.split(',').includes(mod)
+  }
 
-  if (loading) return <LoadingSpinner />
+  const handleLogout = async () => {
+    await fetch('/api/auth/logout', { method: 'POST' })
+    router.push('/login')
+  }
+
+  if (loading) return <div style={{ minHeight: '100vh', backgroundColor: '#1F1F4D', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><LoadingSpinner /></div>
 
   return (
-    <div>
-      <PageHeader
-        logo
-        title="Jeito de Viver"
-        subtitle="Centro Educacional"
-      />
+    <div style={{
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #1F1F4D 0%, #2E2E66 50%, #1a1a4d 100%)',
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      padding: '32px 16px',
+    }}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/ibtm-logo.png" alt="IBTM" style={{ width: 80, height: 80, objectFit: 'contain', marginBottom: 16 }} />
 
-      {erro && (
-        <div className="bg-red-50 border border-red-300 text-red-700 rounded-lg px-4 py-3 mb-6">
-          {erro}
-        </div>
-      )}
+      <h1 style={{ color: '#fff', fontFamily: 'Fraunces, serif', fontSize: 'clamp(20px,4vw,28px)', fontWeight: 400, marginBottom: 4, textAlign: 'center', lineHeight: 1.2 }}>
+        Igreja Batista Transformação
+      </h1>
+      <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, marginBottom: 48, textAlign: 'center' }}>
+        Bem-vindo, <strong style={{ color: 'rgba(255,255,255,0.85)' }}>{me?.nome}</strong>. Escolha o módulo.
+      </p>
 
-      {/* Metric Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <MetricCard label="Total de Alunos" value={alunos.length} icon="🎒" color="#E07535" bg="#fff7f2" />
-        <MetricCard label="Alunos Ativos" value={alunosAtivos} icon="✅" color="#166534" bg="#f0fdf4" />
-        <MetricCard label="Turmas Ativas" value={turmasAtivas} icon="🏫" color="#1d4ed8" bg="#eff6ff" />
-        <MetricCard label="Professores" value={professores.length} icon="👨‍🏫" color="#6d28d9" bg="#f5f3ff" />
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24, justifyContent: 'center', maxWidth: 700 }}>
+        {hasModule('secretaria') && (
+          <ModuleCard
+            onClick={() => router.push('/secretaria')}
+            icon="⛪"
+            title="Secretaria"
+            desc="Agenda pastoral, fiéis e agendamentos"
+            accent="#C5A059"
+            bg="#002347"
+          />
+        )}
+        {hasModule('educacional') && (
+          <ModuleCard
+            onClick={() => router.push('/educacional')}
+            icon="🏫"
+            title="Centro Educacional"
+            desc="Jeito de Viver — alunos, turmas e professores"
+            accent="#E07535"
+            bg="#1F2937"
+          />
+        )}
+        {me?.role === 'admin' && (
+          <ModuleCard
+            onClick={() => router.push('/configuracoes')}
+            icon="⚙️"
+            title="Configurações"
+            desc="Usuários e acesso ao sistema"
+            accent="#4848A8"
+            bg="#1a1a40"
+          />
+        )}
       </div>
 
-      {/* Turmas grid */}
-      <h2 className="text-base font-semibold text-gray-700 mb-4">Turmas</h2>
-      {turmas.length === 0 ? (
-        <div className="bg-white rounded-xl shadow-sm p-10 text-center text-gray-400">
-          <img src="/logo.png" alt="Jeito de Viver" className="mx-auto mb-3" style={{ height: 64, opacity: 0.4 }} />
-          <p className="font-semibold">Nenhuma turma cadastrada.</p>
-          <p className="text-sm mt-1">
-            Acesse{' '}
-            <a href="/cadastros/turmas" style={{ color: '#E07535' }} className="underline">
-              Cadastros → Turmas
-            </a>{' '}
-            para adicionar.
-          </p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-5">
-          {turmas.map((turma) => {
-            const alunosDaTurma = alunos.filter(a => a.turma_id === turma.id)
-            const professor = professores.find(p => p.id === turma.professor_id)
-            return (
-              <div key={turma.id} className="bg-white rounded-xl shadow-sm overflow-hidden">
-                <div
-                  style={{ backgroundColor: '#1F2937', borderBottom: '2px solid #E07535' }}
-                  className="flex items-center gap-3 px-4 py-3"
-                >
-                  <div
-                    style={{ backgroundColor: '#E07535', color: 'white' }}
-                    className="w-10 h-10 rounded-full flex items-center justify-center text-lg flex-shrink-0"
-                  >
-                    🏫
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-white font-semibold text-sm leading-tight truncate">{turma.nome}</p>
-                    <p style={{ color: '#E07535' }} className="text-xs">
-                      {turma.turno} · {alunosDaTurma.length} aluno{alunosDaTurma.length !== 1 ? 's' : ''}
-                    </p>
-                  </div>
-                  {!turma.ativo && (
-                    <span className="text-xs bg-gray-600 text-gray-300 px-2 py-0.5 rounded-full flex-shrink-0">Inativa</span>
-                  )}
-                </div>
-
-                <div className="px-4 py-3">
-                  {professor && (
-                    <p className="text-sm text-gray-500 mb-2">
-                      <span className="font-medium text-gray-700">Prof:</span> {professor.nome}
-                    </p>
-                  )}
-                  {alunosDaTurma.length === 0 ? (
-                    <p className="text-gray-400 text-sm text-center py-2">Nenhum aluno nesta turma</p>
-                  ) : (
-                    <div className="space-y-1 max-h-40 overflow-y-auto">
-                      {alunosDaTurma.slice(0, 6).map(a => (
-                        <div key={a.id} className="flex items-center gap-2 text-sm">
-                          <div style={{ backgroundColor: '#E07535' }} className="w-5 h-5 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                            {a.nome.charAt(0)}
-                          </div>
-                          <span className="text-gray-700 truncate">{a.nome}</span>
-                          {!a.ativo && <span className="text-xs text-gray-400">(inativo)</span>}
-                        </div>
-                      ))}
-                      {alunosDaTurma.length > 6 && (
-                        <p className="text-xs text-gray-400 text-center pt-1">+{alunosDaTurma.length - 6} mais</p>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      )}
+      <button
+        onClick={handleLogout}
+        style={{ marginTop: 48, color: 'rgba(255,255,255,0.35)', fontSize: 12, background: 'none', border: 'none', cursor: 'pointer' }}
+      >
+        ⏏ Sair do sistema
+      </button>
     </div>
   )
 }
 
-function MetricCard({ label, value, icon, color, bg }: {
-  label: string; value: number; icon: string; color: string; bg: string
+function ModuleCard({ onClick, icon, title, desc, accent, bg }: {
+  onClick: () => void; icon: string; title: string; desc: string; accent: string; bg: string
 }) {
   return (
-    <div style={{ backgroundColor: bg, borderTop: `4px solid ${color}` }} className="rounded-xl shadow-sm px-5 py-4">
-      <div className="flex items-center gap-2">
-        <span className="text-2xl">{icon}</span>
-        <p className="text-3xl font-bold" style={{ color }}>{value}</p>
-      </div>
-      <p className="text-sm text-gray-600 mt-1 font-medium">{label}</p>
-    </div>
+    <button
+      onClick={onClick}
+      style={{
+        width: 260, background: bg, border: `2px solid ${accent}40`, borderRadius: 16,
+        padding: '28px 20px', textAlign: 'center', cursor: 'pointer',
+        transition: 'transform 0.15s, border-color 0.15s, box-shadow 0.15s',
+      }}
+      onMouseEnter={(e) => {
+        const el = e.currentTarget
+        el.style.transform = 'translateY(-4px)'
+        el.style.borderColor = accent
+        el.style.boxShadow = `0 20px 40px -10px ${accent}50`
+      }}
+      onMouseLeave={(e) => {
+        const el = e.currentTarget
+        el.style.transform = 'translateY(0)'
+        el.style.borderColor = `${accent}40`
+        el.style.boxShadow = 'none'
+      }}
+    >
+      <div style={{ fontSize: 44, marginBottom: 12 }}>{icon}</div>
+      <p style={{ color: accent, fontWeight: 700, fontSize: 17, marginBottom: 8 }}>{title}</p>
+      <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: 13, lineHeight: 1.5 }}>{desc}</p>
+    </button>
   )
 }

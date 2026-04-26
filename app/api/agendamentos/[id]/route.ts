@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAgendamento, updateAgendamento, deleteAgendamento } from '@/lib/db'
+import { getAgendamentoEdu as getAgendamento, updateAgendamentoEdu as updateAgendamento, deleteAgendamentoEdu as deleteAgendamento } from '@/lib/db'
 
 export const dynamic = 'force-dynamic'
 

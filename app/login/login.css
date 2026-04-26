@@ -21,8 +21,9 @@
   --ibtm-white:      #FFFFFF;
 
   display: grid;
-  grid-template-columns: minmax(420px, 1fr) 1.2fr;
-  min-height: 100vh;
+  grid-template-columns: minmax(380px, 1fr) 1.2fr;
+  height: 100vh;
+  overflow: hidden;
   font-family: 'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   color: var(--ibtm-ink);
   -webkit-font-smoothing: antialiased;
@@ -31,14 +32,15 @@
 .ibtm-login-grid * { box-sizing: border-box; }
 
 @media (max-width: 900px) {
-  .ibtm-login-grid { grid-template-columns: 1fr; }
-  .ibtm-media-side { min-height: 320px; order: -1; }
+  .ibtm-login-grid { grid-template-columns: 1fr; height: auto; overflow: auto; }
+  .ibtm-media-side { min-height: 220px; order: -1; }
 }
 
 /* ── Form side ── */
 .ibtm-form-side {
   background: var(--ibtm-paper);
   position: relative;
+  overflow-y: auto;
 }
 .ibtm-form-side::before {
   content: '';
@@ -51,38 +53,40 @@
 
 .ibtm-form-inner {
   position: relative; z-index: 1;
-  height: 100%;
+  min-height: 100%;
   display: flex; flex-direction: column;
-  padding: 48px 56px 100px;
-  max-width: 520px;
+  justify-content: center;
+  padding: 32px 48px 72px;
+  max-width: 500px;
   margin: 0 auto;
   width: 100%;
 }
 @media (max-width: 600px) {
-  .ibtm-form-inner { padding: 32px 24px 80px; }
+  .ibtm-form-inner { padding: 24px 20px 64px; }
 }
 
 .ibtm-logo-stack {
-  display: flex; flex-direction: column; gap: 16px;
-  margin-bottom: 8px;
+  display: flex; flex-direction: row; align-items: center; gap: 14px;
+  margin-bottom: 6px;
 }
 .ibtm-logo-img {
-  width: 88px; height: 88px;
+  width: 56px; height: 56px;
   object-fit: contain;
-  margin-left: -8px;
+  flex-shrink: 0;
 }
 .ibtm-brand-line {
-  font-size: 11px;
-  letter-spacing: 0.28em;
+  font-size: 10px;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--ibtm-ink-mute);
+  line-height: 1.4;
 }
 
 .ibtm-heading {
   font-family: 'Fraunces', serif;
   font-weight: 400;
-  font-size: 44px;
-  line-height: 1.05;
+  font-size: 34px;
+  line-height: 1.08;
   letter-spacing: -0.025em;
   margin: 0;
   color: var(--ibtm-ink);
@@ -94,9 +98,9 @@
 }
 
 .ibtm-subheading {
-  margin-top: 12px;
+  margin-top: 8px;
   color: var(--ibtm-ink-mute);
-  font-size: 15px;
+  font-size: 14px;
   line-height: 1.5;
   max-width: 380px;
 }
@@ -121,9 +125,9 @@
   width: 100%;
   background: var(--ibtm-white);
   border: 1px solid var(--ibtm-line);
-  border-radius: 12px;
-  padding: 16px 18px;
-  font: 400 15px/1 'Geist', sans-serif;
+  border-radius: 10px;
+  padding: 12px 16px;
+  font: 400 14px/1 'Geist', sans-serif;
   color: var(--ibtm-ink);
   transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
   outline: none;
@@ -149,9 +153,9 @@
   background: var(--ibtm-primary);
   color: #fff;
   border: none;
-  border-radius: 12px;
-  padding: 17px 20px;
-  font: 500 15px/1 'Geist', sans-serif;
+  border-radius: 10px;
+  padding: 13px 20px;
+  font: 500 14px/1 'Geist', sans-serif;
   cursor: pointer;
   transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
   display: flex; align-items: center; justify-content: center; gap: 10px;
@@ -173,9 +177,9 @@
 
 .ibtm-verse-corner {
   position: absolute;
-  bottom: 32px; left: 0; right: 0;
+  bottom: 20px; left: 0; right: 0;
   text-align: center;
-  font-size: 13px;
+  font-size: 12px;
   color: var(--ibtm-ink-mute);
   z-index: 2;
   padding: 0 24px;
@@ -186,7 +190,7 @@
   color: var(--ibtm-primary);
 }
 @media (max-width: 900px) {
-  .ibtm-verse-corner { position: static; padding: 24px; }
+  .ibtm-verse-corner { position: static; padding: 16px 24px; }
 }
 
 /* ── Media side ── */

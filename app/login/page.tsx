@@ -184,7 +184,7 @@ function MediaCarousel() {
         <div style={{ textTransform: 'capitalize' }}>{today}</div>
         <div className="ibtm-live">
           <span className="ibtm-live-dot" />
-          <span>IBTM · Tabernáculo da Manhã</span>
+          <span>IBTM · Transformação</span>
         </div>
       </div>
 
@@ -256,10 +256,10 @@ function LoginForm() {
         <div className="ibtm-logo-stack">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/ibtm-logo.png" alt="IBTM" className="ibtm-logo-img" />
-          <div className="ibtm-brand-line">Igreja Batista Tabernáculo da Manhã</div>
+          <div className="ibtm-brand-line">Igreja Batista Transformação</div>
         </div>
 
-        <div style={{ marginTop: 56 }}>
+        <div style={{ marginTop: 28 }}>
           <h1 className="ibtm-heading">
             Acesse sua <em>conta</em>.
           </h1>
@@ -268,7 +268,7 @@ function LoginForm() {
           </p>
         </div>
 
-        <form onSubmit={submit} style={{ marginTop: 40, display: 'flex', flexDirection: 'column', gap: 18 }}>
+        <form onSubmit={submit} style={{ marginTop: 24, display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div>
             <label className="ibtm-field-label">Usuário</label>
             <div className="ibtm-input-wrap">
@@ -311,12 +311,12 @@ function LoginForm() {
             </div>
           </div>
 
-          <button type="submit" className="ibtm-btn-primary" disabled={loading} style={{ marginTop: 8 }}>
+          <button type="submit" className="ibtm-btn-primary" disabled={loading} style={{ marginTop: 4 }}>
             {loading ? <><SpinnerIcon /> Entrando...</> : <>Entrar <ArrowRightIcon /></>}
           </button>
         </form>
 
-        <div style={{ marginTop: 32, fontSize: 13, color: 'var(--ibtm-ink-mute)' }}>
+        <div style={{ marginTop: 20, fontSize: 13, color: 'var(--ibtm-ink-mute)' }}>
           Ainda não tem acesso?{' '}
           <a href="#" style={{ color: 'var(--ibtm-primary)', textDecoration: 'none', fontWeight: 500 }}>
             Fale com a secretaria
